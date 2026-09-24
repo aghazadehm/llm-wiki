@@ -1,6 +1,9 @@
 ---
 type: concept
 status: draft
+tags:
+  - testing
+  - test-doubles
 ---
 
 # Choosing Test Doubles
@@ -9,14 +12,16 @@ Choose a [[Test Doubles|test double]] based on the behavior the test needs to es
 
 ## Selection guide
 
-| Need in the test                                                   | Suitable choice                                              |                                       |
-| ------------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------- |
-| A required argument is irrelevant to the scenario                  | [[Types of Test Doubles#Dummy                                | Dummy]]                               |
-| The system needs a controlled answer from a collaborator           | [[Types of Test Doubles#Stub                                 | Stub]]                                |
-| The test must inspect information received by a collaborator       | [[Types of Test Doubles#Spy                                  | Spy]]                                 |
-| The required behavior is an explicit collaboration                 | [[Types of Test Doubles#Mock                                 | Mock]] with [[Behavior Verification]] |
-| A usable but simplified implementation supports the scenario       | [[Types of Test Doubles#Fake                                 | Fake]]                                |
-| A real collaborator is practical and appropriate to the test scope | Use the real collaborator, often with [[State Verification]] |                                       |
+The links below escape their alias pipe as `\|`, because a raw `|` inside a table row is read as a cell separator. That is a Markdown constraint and not part of the concept.
+
+| Need in the test | Suitable choice |
+| --- | --- |
+| A required argument is irrelevant to the scenario | [[Types of Test Doubles#Dummy\|Dummy]] |
+| The system needs a controlled answer from a collaborator | [[Types of Test Doubles#Stub\|Stub]] |
+| The test must inspect information received by a collaborator | [[Types of Test Doubles#Spy\|Spy]] |
+| The required behavior is an explicit collaboration | [[Types of Test Doubles#Mock\|Mock]] with [[Behavior Verification]] |
+| A usable but simplified implementation supports the scenario | [[Types of Test Doubles#Fake\|Fake]] |
+| A real collaborator is practical and appropriate to the test scope | Use the real collaborator, often with [[State Verification]] |
 
 ## Questions to ask
 
@@ -44,5 +49,5 @@ This guide is only as good as the collaborator's contract, since a double that p
 
 ## Sources
 
-- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
-- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007.
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007. `raw/articles/Mocks Aren't Stubs.md`
+- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007. `raw/books/xUnit Test Patterns Refactoring Test Code-Addison-Wesley (2007).pdf`

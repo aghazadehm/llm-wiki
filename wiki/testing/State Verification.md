@@ -1,6 +1,11 @@
 ---
 type: concept
 status: draft
+tags:
+  - testing
+  - tdd
+aliases:
+  - State-Based Testing
 ---
 
 # State Verification
@@ -8,6 +13,8 @@ status: draft
 **State verification** establishes correctness by checking the observable result after the system under test has been exercised. The result may be a return value, a visible state change, or another observable outcome exposed by the system or a collaborator.
 
 For example, a test can call an operation and assert that an order is marked as fulfilled and that its inventory is reduced. The test checks the outcome, not the sequence of calls used to produce it.
+
+Meszaros states the pattern's question as how to make tests self-checking when there is state to be verified, and records the alternative name State-Based Testing (State Verification pattern, p. 462).
 
 ## Relationship to test doubles
 
@@ -33,5 +40,5 @@ What makes state verification durable is that the assertion usually names someth
 
 ## Sources
 
-- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
-- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007.
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007. `raw/articles/Mocks Aren't Stubs.md`
+- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007. `raw/books/xUnit Test Patterns Refactoring Test Code-Addison-Wesley (2007).pdf`

@@ -67,6 +67,7 @@ RAW_PATH_RE = re.compile(r"raw/[^\s`)\]|,]+\.(?:pdf|md|txt)")
 CURLY_QUOTE_RE = re.compile(r"[\u2018\u2019\u201c\u201d]")
 LIST_ITEM_RE = re.compile(r"^\s*[-*]\s+\S")
 FENCE_RE = re.compile(r"^(```|~~~)")
+TABLE_ROW_RE = re.compile(r"^\s*\|")
 
 #: Every rule id this validator can emit. ``--self-test`` asserts that each one
 #: is exercised by at least one fixture, so rule coverage cannot silently rot.
@@ -90,6 +91,7 @@ ALL_RULES = frozenset(
         "link.unresolved",
         "link.anchor",
         "link.outside_wiki",
+        "link.pipe_in_table",
         "style.curly_quotes",
         "collection.duplicate_title",
         "collection.no_index",
@@ -325,6 +327,31 @@ def find_section(headings: Sequence[Heading], name: str) -> Heading | None:
 # --- link resolution --------------------------------------------------------
 
 
+def split_link(body: str) -> tuple[str, str]:
+    """Split a wikilink body into (target, display text).
+
+    Inside a table row Obsidian requires the alias separator to be escaped as
+    ``\\|``; both forms are accepted here and the backslash is stripped so the
+    target still resolves. An unescaped pipe inside a table row is reported
+    separately, because the markdown parser reads it as a cell separator.
+    """
+    for index, char in enumerate(body):
+        if char != "|":
+            continue
+        if index and body[index - 1] == "\\":
+            return body[: index - 1], body[index + 1 :]
+        return body[:index], body[index + 1 :]
+    return body, ""
+
+
+def has_unescaped_pipe(body: str) -> bool:
+    """True when a wikilink body carries a '|' that no backslash escapes."""
+    for index, char in enumerate(body):
+        if char == "|" and (index == 0 or body[index - 1] != "\\"):
+            return True
+    return False
+
+
 def build_link_index(docs: dict[str, Doc]) -> dict[str, str]:
     """Map every referenceable name (path, basename, alias) to a document."""
     index: dict[str, str] = {}
@@ -399,7 +426,7 @@ def check_doc(
 
         tags = doc.tags
         if not tags:
-            warn(1, "frontmatter.tags", "frontmatter has no 'tags'; add at least one so the article is findable")
+            error(1, "frontmatter.tags", "frontmatter has no 'tags'; add at least one so the article is findable")
         else:
             unknown = [tag for tag in tags if tag not in KNOWN_TAGS]
             if unknown:
@@ -464,7 +491,7 @@ def check_doc(
     other_index = {Path(path).stem.lower(): path for path in other_md_paths}
     for line, text in iter_body_lines(doc):
         for match in WIKILINK_RE.finditer(text):
-            target = match.group(1).split("|", 1)[0]
+            target = split_link(match.group(1))[0]
             page, _, anchor = target.partition("#")
             if not page.strip():
                 target_doc = doc
@@ -481,6 +508,17 @@ def check_doc(
                 wanted = _normalise(anchor)
                 if not any(_normalise(h.text) == wanted for h in target_doc.headings):
                     error(line, "link.anchor", f"[[{target}]] anchor '#{anchor.strip()}' is not a heading in {target_doc.path}")
+
+        if TABLE_ROW_RE.match(text):
+            for match in WIKILINK_RE.finditer(text):
+                if has_unescaped_pipe(match.group(1)):
+                    error(
+                        line,
+                        "link.pipe_in_table",
+                        f"[[{match.group(1)}]] uses an unescaped '|' in a table row; escape it as '\\|' "
+                        "or the row is rendered with extra cells",
+                    )
+                    break
 
         for _ in CURLY_QUOTE_RE.finditer(text):
             warn(line, "style.curly_quotes", "curly quotes found; use straight quotes for consistency")
@@ -504,11 +542,11 @@ def check_collection(docs: dict[str, Doc], link_index: dict[str, str]) -> list[F
         if index_path not in docs:
             findings.append(
                 Finding(
-                    index_path if folder else "index.md",
+                    f"{folder}/" if folder else "./",
                     1,
                     "warning",
                     "collection.no_index",
-                    f"domain '{folder or '.'}' has no index.md recording its knowledge map",
+                    "no index.md recording this domain's knowledge map",
                 )
             )
 
@@ -535,7 +573,7 @@ def check_collection(docs: dict[str, Doc], link_index: dict[str, str]) -> list[F
     for path, doc in docs.items():
         for line, text in iter_body_lines(doc):
             for match in WIKILINK_RE.finditer(text):
-                target = match.group(1).split("|", 1)[0].split("#", 1)[0].strip()
+                target = split_link(match.group(1))[0].split("#", 1)[0].strip()
                 resolved = link_index.get(target.lower()) if target else None
                 if resolved:
                     referenced.add(resolved)
@@ -941,6 +979,34 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
             ),
             [],
             {"style.curly_quotes"},
+        ),
+        (
+            "escaped pipe in a table wikilink",
+            mutate(
+                **{
+                    good: GOOD.replace(
+                        "A short illustration.\n",
+                        "A short illustration.\n\n| Need | Choice |\n| --- | --- |\n"
+                        "| a related concept | [[Other Article\\|Other]] |\n",
+                    )
+                }
+            ),
+            [],
+            set(),
+        ),
+        (
+            "raw pipe in a table wikilink",
+            mutate(
+                **{
+                    good: GOOD.replace(
+                        "A short illustration.\n",
+                        "A short illustration.\n\n| Need | Choice |\n| --- | --- |\n"
+                        "| a related concept | [[Other Article|Other]] |\n",
+                    )
+                }
+            ),
+            [],
+            {"link.pipe_in_table"},
         ),
     ]
 

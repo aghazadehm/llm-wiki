@@ -77,7 +77,6 @@ aliases:
     - `reviewed` — accepted by the owner. Only the owner sets this.
     - `archived` — superseded or withdrawn; keep the file for history rather than deleting it.
 - `tags` is required and uses lowercase, singular terms from the vocabulary below. Reuse an existing tag before proposing a new one; a new tag is a change to this document.
-    - The validator currently reports a missing `tags` key as a warning, because the articles written before this rule existed are not yet backfilled. It is reported as an error once they are, so treat it as required now.
 - `aliases` is optional and lists synonyms, abbreviations, and plural forms so that links from prose still resolve.
 
 The current tag vocabulary is `testing`, `tdd`, `test-doubles`, `design`, `refactoring`, `architecture`, `tooling`, `process`. It is mirrored in `KNOWN_TAGS` in `tools/validate_wiki.py`; changing it means changing both places.
@@ -115,6 +114,7 @@ An `index` article is an entry point rather than an exposition. Required section
 - Link wiki concepts with wikilinks: `[[State Verification]]`.
 - Use `[[Target|display text]]` when the grammar of the sentence needs different wording, such as a plural. Do not change the meaning of the target.
 - Use `[[Target#Heading]]` to point at a section, and only when that heading exists in the target. A section rename breaks every such link, so prefer a page link unless the section is the point.
+- Inside a table row, escape the alias pipe as `\|`: `[[Target\|display text]]`. An unescaped `|` is read as a cell separator and renders the row with extra cells, which is invisible in the plain text but breaks the table.
 - Link on first mention in a section rather than at every occurrence.
 - Do not link to an article that does not exist. Record the concept as a planned article in the domain index instead.
 - Do not link into `raw/` or `templates/`. Sources are cited in `Sources`, not linked from prose.
@@ -174,7 +174,7 @@ Mechanical:
 - Exactly one H1, with definition content beneath it.
 - `Related Concepts`, `My Understanding`, and `Sources` present in that order, with `Sources` last.
 - No empty sections.
-- Every wikilink and every `#heading` anchor resolves.
+- Every wikilink and every `#heading` anchor resolves, and no wikilink in a table row carries an unescaped `|`.
 - No wikilinks pointing outside `wiki/`.
 - `Sources` non-empty, with every cited local file present in the repository.
 - No duplicate article titles, no domain missing an index, no article missing from its index, no orphan article.

@@ -1,0 +1,7 @@
+# Python bytecode written by tools/validate_wiki.py
+__pycache__/
+*.py[cod]
+
+# OS noise
+.DS_Store
+Thumbs.db

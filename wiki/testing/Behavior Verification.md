@@ -1,6 +1,11 @@
 ---
 type: concept
 status: draft
+tags:
+  - testing
+  - tdd
+aliases:
+  - Interaction Testing
 ---
 
 # Behavior Verification
@@ -8,6 +13,8 @@ status: draft
 **Behavior verification** establishes correctness by checking that the system under test interacted with a collaborator as expected. Expectations can include the operation called, arguments, number of calls, and sometimes their order.
 
 For example, a test may verify that an unfulfilled order asks a notification service to send a message. The interaction itself is the evidence of the required behavior.
+
+Meszaros states the pattern's question as how to make tests self-checking when there is no state to verify, and records the alternative name Interaction Testing (Behavior Verification pattern, p. 468).
 
 ## Relationship to test doubles
 
@@ -33,5 +40,5 @@ The failure mode that recurs in these sources is asserting more than the require
 
 ## Sources
 
-- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
-- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007.
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007. `raw/articles/Mocks Aren't Stubs.md`
+- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007. `raw/books/xUnit Test Patterns Refactoring Test Code-Addison-Wesley (2007).pdf`

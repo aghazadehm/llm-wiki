@@ -1,6 +1,9 @@
 ---
 type: concept
 status: draft
+tags:
+  - testing
+  - tdd
 ---
 
 # Classical and Mockist Testing
@@ -38,4 +41,4 @@ These are stances about where to put the test boundary rather than competing cor
 
 ## Sources
 
-- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007. `raw/articles/Mocks Aren't Stubs.md`

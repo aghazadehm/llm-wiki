@@ -1,11 +1,16 @@
 ---
 type: concept
 status: draft
+tags:
+  - testing
+  - test-doubles
+aliases:
+  - Test Double
 ---
 
 # Test Doubles
 
-A **test double** is a substitute used in a test in place of a real collaborator of the system under test. The term was introduced by Gerard Meszaros, by analogy with a film stunt double: the substitute stands in for something that is impractical or undesirable to use in that test.
+A **test double** is a substitute used in a test in place of a real collaborator of the system under test. Gerard Meszaros, who coined the term, defines it as "any object or component that we install in place of the real component for the express purpose of running a test" (Test Double pattern, p. 133), and introduces the pattern with the film stunt-double analogy the name refers to (p. 523).
 
 Test doubles help a test control a collaborator's responses, observe effects on that collaborator, or avoid dependencies that are slow, nondeterministic, unavailable, costly, or unsafe to invoke. A double is not automatically preferable to a real collaborator; using one changes both what the test exercises and what it can detect.
 
@@ -28,7 +33,9 @@ Tests using doubles commonly use one or both of these approaches:
 - [[State Verification]] checks returned values or observable state after exercising the system.
 - [[Behavior Verification]] checks calls made to a collaborator.
 
-A [[Types of Test Doubles#Mock|mock]] is defined by its use of behavior verification, and a [[Types of Test Doubles#Spy|spy]] also uses behavior verification: it records interactions for the test to assert, but the assertions are made after the exercise phase rather than as predeclared expectations. [[Types of Test Doubles#Stub|Stubs]] and [[Types of Test Doubles#Fake|fakes]] supply indirect inputs and resulting state, which supports state verification.
+A [[Types of Test Doubles#Mock|mock]] is defined by its use of behavior verification, and a [[Types of Test Doubles#Spy|spy]] also uses behavior verification: it records interactions for the test to assert, but the assertions are made after the exercise phase rather than as predeclared expectations. A [[Types of Test Doubles#Stub|stub]] can support either style, since what the test asserts about it is the test's own decision, and a [[Types of Test Doubles#Fake|fake]] provides a working collaborator whose resulting state the test can inspect.
+
+Meszaros divides the same doubles along a different axis than this state-versus-behavior one: a test stub is used to control the indirect *inputs* of the system under test, while a test spy or a mock object is used to verify its indirect *outputs*, and a fake object is "neither directly controlled nor observed by the test" (Figure 11.8, p. 134; Fake Object, p. 551).
 
 ## Related Concepts
 
@@ -43,5 +50,5 @@ The taxonomy describes the role a substitute plays in one particular test, not a
 
 ## Sources
 
-- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
-- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007.
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007. `raw/articles/Mocks Aren't Stubs.md`
+- Gerard Meszaros, *xUnit Test Patterns: Refactoring Test Code*, Addison-Wesley, 2007. `raw/books/xUnit Test Patterns Refactoring Test Code-Addison-Wesley (2007).pdf`
