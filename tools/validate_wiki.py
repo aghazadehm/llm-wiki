@@ -551,7 +551,11 @@ def check_collection(docs: dict[str, Doc], link_index: dict[str, str]) -> list[F
             )
 
     by_title: dict[str, list[str]] = {}
-    for path in docs:
+    for path, doc in docs.items():
+        if doc.doc_type == "index":
+            # Domain entry points are all named index.md by design and are
+            # addressed by path, so they can never make a wikilink ambiguous.
+            continue
         title = Path(path).stem.lower()
         by_title.setdefault(title, []).append(path)
     for title, paths in sorted(by_title.items()):
@@ -979,6 +983,12 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
             ),
             [],
             {"style.curly_quotes"},
+        ),
+        (
+            "two domain indexes",
+            mutate(**{index_path: INDEX, "wiki/design/index.md": INDEX}),
+            [],
+            set(),
         ),
         (
             "escaped pipe in a table wikilink",

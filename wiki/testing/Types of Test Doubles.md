@@ -53,6 +53,7 @@ The same helper can sometimes serve more than one role. Classification should fo
 - [[Test Doubles]] — the collective term, and why substitutes are used at all.
 - [[Choosing Test Doubles]] — selection guidance for a specific test.
 - [[State Verification]] and [[Behavior Verification]] — the separate question of how a test establishes correctness.
+- [[Seam]] and [[Dependency Injection]] — where a substitute of any of these kinds can be installed, which is what every role here depends on.
 
 ## My Understanding
 

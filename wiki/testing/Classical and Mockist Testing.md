@@ -34,6 +34,7 @@ Neither style removes the need for broader tests that validate integrations and 
 - [[Test Doubles]] and [[Types of Test Doubles]] — the substitutes the two styles disagree about using.
 - [[State Verification]] and [[Behavior Verification]] — the evidence each style tends to rely on.
 - [[Choosing Test Doubles]] — the selection decision in an individual test.
+- [[Dependency Injection]] — where the collaborators both styles argue about come from, since injection decides which implementation an object actually receives.
 
 ## My Understanding
 

@@ -14,6 +14,8 @@ A **test double** is a substitute used in a test in place of a real collaborator
 
 Test doubles help a test control a collaborator's responses, observe effects on that collaborator, or avoid dependencies that are slow, nondeterministic, unavailable, costly, or unsafe to invoke. A double is not automatically preferable to a real collaborator; using one changes both what the test exercises and what it can detect.
 
+Installing a double requires a [[Seam]] in the design: a place where behavior can be changed without editing the code being tested. [[Dependency Injection]] is the usual way that seam comes to exist, which is why the two concepts are prerequisites for this one rather than alternatives to it.
+
 ## Taxonomy
 
 [[Types of Test Doubles]] distinguishes five commonly used kinds:
@@ -43,6 +45,8 @@ Meszaros divides the same doubles along a different axis than this state-versus-
 - [[Choosing Test Doubles]] — deciding whether a real collaborator or a particular kind of double fits the behavior and the test scope.
 - [[State Verification]] and [[Behavior Verification]] — the two ways a test establishes correctness.
 - [[Classical and Mockist Testing]] — the broader design philosophies behind recurring choices between real collaborators, doubles, state verification, and behavior verification.
+- [[Seam]] — the property a design needs before a substitute can be installed at all.
+- [[Dependency Injection]] — the mechanism that normally provides that property.
 
 ## My Understanding
 

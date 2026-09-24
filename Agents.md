@@ -55,6 +55,7 @@ python tools/validate_wiki.py --self-test # verify the rules themselves
 - Use the established software engineering term as the title. When a concept has a widely used synonym or a plural form, record it in `aliases` instead of creating a second article.
 - One concept per file. A concept earns its own article when it has an independent definition, its own terminology, and its own relationships. Keep it as a section of its parent when it can be stated in a paragraph without losing precision.
 - Every domain folder contains an `index.md`. Nothing else belongs in `wiki/` besides articles and domain indexes.
+- Domain indexes all share the name `index.md` by design. They are addressed by path and are never the target of a wikilink, so they are exempt from the rule that article titles must be unique.
 
 ### Frontmatter
 

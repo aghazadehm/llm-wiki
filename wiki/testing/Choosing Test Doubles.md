@@ -42,6 +42,7 @@ Conversely, always using real collaborators can make tests slow, fragile, diffic
 - [[Test Doubles]] and [[Types of Test Doubles]] — the substitutes being chosen between.
 - [[State Verification]] and [[Behavior Verification]] — the evidence each choice produces.
 - [[Classical and Mockist Testing]] — the broader philosophies behind recurring choices between real collaborators, doubles, state verification, and behavior verification.
+- [[Seam]] and [[Dependency Injection]] — whether a substitute can be installed here at all, which is a question that comes before choosing between kinds of double.
 
 ## My Understanding
 
