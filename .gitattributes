@@ -1,0 +1,11 @@
+# Line endings are pinned to LF in the index *and* the working tree.
+#
+# Git for Windows ships core.autocrlf=true, which stores LF but writes CRLF on
+# checkout, so every `git add` warned that the file would be rewritten and the
+# working tree drifted from the index. Pinning LF makes the two agree, so a
+# diff shows a content change and nothing else. Markdown, Python, JSON and
+# PDFs are all read identically with LF.
+* text=auto eol=lf
+
+# Binary assets are never normalised and never diffed as text.
+*.pdf binary

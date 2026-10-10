@@ -5,3 +5,8 @@ __pycache__/
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Obsidian rewrites these per device; they are window layout, not shared vault
+# configuration, so tracking them only produces noise in every commit.
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
