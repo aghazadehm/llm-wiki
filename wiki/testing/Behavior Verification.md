@@ -36,7 +36,7 @@ Behavior verification complements rather than replaces assertions about outcomes
 
 ## My Understanding
 
-The failure mode that recurs in these sources is asserting more than the requirement states: argument values, ordering, or call counts that no caller depends on. My reading is that an interaction assertion earns its place only when something outside the system under test would notice if the interaction stopped happening; otherwise the assertion documents the current implementation instead of the required behavior. This is an interpretation, not a claim taken from the sources.
+The failure mode that recurs in these sources is asserting more than the requirement states: argument values, ordering, or call counts that no caller depends on. My reading is that an interaction assertion earns its place only when something outside the system under test would notice if the interaction stopped happening; otherwise the assertion documents the current implementation instead of the required behavior.
 
 ## Sources
 

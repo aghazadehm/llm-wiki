@@ -64,7 +64,7 @@ Behavior is changed where calls to code in other files are resolved. "In languag
 
 ## My Understanding
 
-The part of this idea I find most useful is that it separates two things usually conflated: the place where behavior differs, and the place where that difference is decided. Once they are distinguished, it becomes clear why the practical question in a test is not "which double should I use" but "can I reach the decision from here at all" — and why dependency injection earns its place without any framework, since it moves the decision to a point a test can reach. This is an interpretation, not a claim taken from the sources.
+The part of this idea I find most useful is that it separates two things usually conflated: the place where behavior differs, and the place where that difference is decided. Once they are distinguished, it becomes clear why the practical question in a test is not "which double should I use" but "can I reach the decision from here at all" — and why dependency injection earns its place without any framework, since it moves the decision to a point a test can reach.
 
 ## Sources
 

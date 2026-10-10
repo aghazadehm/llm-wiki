@@ -66,7 +66,7 @@ The cost of a container is visible in how Bender and McWherter describe it: the 
 
 ## My Understanding
 
-Reading these sources together, the disagreement between them is narrower than it looks: all four treat injection as moving the choice of implementation to a place a test can reach, and they differ only in how much machinery that justifies. My reading is that the framework question is a genuine trade rather than a maturity step, because a container converts a set of readable constructor calls into rules held somewhere else — which is exactly the benefit Bender and McWherter claim for it and exactly what Koskela's footnote warns against paying for. This is an interpretation, not a claim taken from the sources.
+Reading these sources together, the disagreement between them is narrower than it looks: all four treat injection as moving the choice of implementation to a place a test can reach, and they differ only in how much machinery that justifies. My reading is that the framework question is a genuine trade rather than a maturity step, because a container converts a set of readable constructor calls into rules held somewhere else — which is exactly the benefit Bender and McWherter claim for it and exactly what Koskela's footnote warns against paying for.
 
 ## Sources
 

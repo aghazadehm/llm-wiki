@@ -32,11 +32,11 @@ The verification method alone does not determine the test level or quality. The 
 
 - [[Behavior Verification]] — the contrasting approach.
 - [[Test Doubles]] and [[Types of Test Doubles]] — the substitutes discussed above.
-- [[Classical and Mockist Testing]] — the broader design discussion.
+- [[Classical and Mockist Testing]] — where these two approaches sit in the wider argument.
 
 ## My Understanding
 
-What makes state verification durable is that the assertion usually names something a caller of the system could also observe, so internal restructuring does not invalidate it. My reading is that its real limit is not that state is unavailable but that some requirements are about an interaction — a cache being consulted, a message being sent, an audit entry being written — and forcing those into state assertions makes the test read bookkeeping the requirement never mentions. This is an interpretation, not a claim taken from the sources.
+What makes state verification durable is that the assertion usually names something a caller of the system could also observe, so internal restructuring does not invalidate it. My reading is that its real limit is not that state is unavailable but that some requirements are about an interaction — a cache being consulted, a message being sent, an audit entry being written — and forcing those into state assertions makes the test read bookkeeping the requirement never mentions.
 
 ## Sources
 

@@ -53,7 +53,7 @@ aliases:
 ## Related Concepts
 
 - [[ReAct]] — الگوی استدلال + عمل.
-- [[Function Calling]] — مکانیزم فنی برای صدا زدن ابزارها.
+- [[Function Calling]] — ابزارهایی که ایجنت در حلقه صدا می‌زند.
 - [[LLM Harness]] — سیستم دور مدل.
 - [[LLM Security]] — سه‌گانه مرگبار ایجنت‌ها.
 

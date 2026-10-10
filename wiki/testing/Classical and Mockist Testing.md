@@ -38,7 +38,7 @@ Neither style removes the need for broader tests that validate integrations and 
 
 ## My Understanding
 
-These are stances about where to put the test boundary rather than competing correctness criteria, and the same codebase can use both where the dependency justifies it. My reading is that the sharpest practical difference is in what a failure tells you: isolated tests localize a fault quickly but can pass while the real collaboration is broken, while tests over real collaborators catch interaction problems but let one faulty collaborator fail many unrelated tests. That is a trade between diagnosis speed and integration coverage, not a question of which camp is right. This is an interpretation, not a claim taken from the sources.
+These are stances about where to put the test boundary rather than competing correctness criteria, and the same codebase can use both where the dependency justifies it. My reading is that the sharpest practical difference is in what a failure tells you: isolated tests localize a fault quickly but can pass while the real collaboration is broken, while tests over real collaborators catch interaction problems but let one faulty collaborator fail many unrelated tests. That is a trade between diagnosis speed and integration coverage, not a question of which camp is right.
 
 ## Sources
 

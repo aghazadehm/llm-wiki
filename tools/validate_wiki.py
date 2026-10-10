@@ -11,6 +11,7 @@ Checks every article in ``wiki/**/*.md`` for:
 * links: wikilinks point into ``wiki/`` (sources are cited, not linked)
 * sources: at least one entry, and any cited local file exists under ``raw/``
 * language: an article is written in the language its domain declares in Agents.md
+* prose: a passage of one article that also appears in another is reported
 * collection: no duplicate titles, no domain without an index, no orphan article
 
 Usage::
@@ -138,6 +139,7 @@ ALL_RULES = frozenset(
         "link.pipe_in_table",
         "style.curly_quotes",
         "style.language",
+        "collection.duplicate_prose",
         "collection.duplicate_title",
         "collection.no_index",
         "collection.index_missing",
@@ -397,6 +399,95 @@ def find_section(headings: Sequence[Heading], name: str) -> Heading | None:
         if _normalise(heading.text) == _normalise(name):
             return heading
     return None
+
+
+def _section_lines(doc: Doc, name: str) -> set[int]:
+    """Body lines of a section and its subsections, so one can be skipped."""
+    for index, heading in enumerate(doc.headings):
+        if _normalise(heading.text) != _normalise(name):
+            continue
+        lines = {line for line, _ in heading.content}
+        for child in doc.headings[index + 1 :]:
+            if child.level <= heading.level:
+                break
+            lines.update(line for line, _ in child.content)
+        return lines
+    return set()
+
+
+# --- repeated prose ---------------------------------------------------------
+
+#: A sentence shorter than this is not evidence of duplication. Short bullets,
+#: section lead-ins and one-line definitions recur legitimately, and a check
+#: that flagged them would be noise rather than a gate.
+DUPLICATE_MIN_WORDS = 8
+
+_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?\u061f])\s+|\n+")
+_WORD_RE = re.compile(r"\w+")
+
+
+def _comparison_key(sentence: str) -> str | None:
+    """Reduce a sentence to its words, or ``None`` when it is too short to count.
+
+    Markdown decoration, link syntax, and the zero-width non-joiner are dropped
+    so that wording decides whether two passages match, not formatting: Persian
+    ``می\u200cشود`` and ``میشود`` are the same word to a reader.
+    """
+    text = WIKILINK_RE.sub(lambda match: match.group(1).split("|")[-1], sentence)
+    text = _MARKDOWN_LINK_RE.sub(r"\1", text)
+    text = re.sub(r"[*_`#>|]", " ", text)
+    text = text.replace("\u200c", "").lower()
+    words = _WORD_RE.findall(text)
+    if len(words) < DUPLICATE_MIN_WORDS:
+        return None
+    return " ".join(words)
+
+
+def _duplicate_prose_findings(docs: dict[str, Doc]) -> list[Finding]:
+    """Report a passage that appears in more than one article.
+
+    Reports each repeat after the first, naming the article and line it first
+    appeared in, the way duplicate titles are reported. ``Sources`` is skipped,
+    because two articles citing the same edition on purpose are not repeating
+    each other's prose.
+    """
+    first_seen: dict[str, tuple[str, int, str]] = {}
+    findings: list[Finding] = []
+
+    for path in sorted(docs):
+        doc = docs[path]
+        sources_lines = _section_lines(doc, "Sources")
+        for line, text in iter_body_lines(doc):
+            if line in sources_lines:
+                continue
+            for sentence in _SENTENCE_SPLIT_RE.split(text):
+                sentence = sentence.strip()
+                key = _comparison_key(sentence)
+                if key is None:
+                    continue
+                origin = first_seen.get(key)
+                if origin is None:
+                    first_seen[key] = (path, line, sentence)
+                    continue
+                if origin[0] == path:
+                    continue  # repetition inside one article is not this check
+                findings.append(
+                    Finding(
+                        path,
+                        line,
+                        "warning",
+                        "collection.duplicate_prose",
+                        f"this passage already appears in {origin[0]}:{origin[1]} "
+                        f'("{_truncate(origin[2])}"); link to that article instead of restating it',
+                    )
+                )
+    return findings
+
+
+def _truncate(text: str, limit: int = 60) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "\u2026"
 
 
 # --- link resolution --------------------------------------------------------
@@ -668,6 +759,8 @@ def check_collection(docs: dict[str, Doc], link_index: dict[str, str]) -> list[F
                     )
                 )
 
+    findings.extend(_duplicate_prose_findings(docs))
+
     referenced: set[str] = set()
     link_lines: dict[str, list[tuple[str, int]]] = {}
     for path, doc in docs.items():
@@ -816,7 +909,7 @@ A definition paragraph for the other concept.
 
 ## My Understanding
 
-An interpretation, not a claim taken from the sources.
+A separate reading of the other concept, recorded as interpretation.
 
 ## Sources
 
@@ -851,7 +944,7 @@ A definition paragraph.
 
 ## My Understanding
 
-An interpretation, not a claim taken from the sources.
+A lone interpretation, set down apart from the sources.
 
 ## Sources
 
@@ -917,7 +1010,7 @@ A definition paragraph for the article under test.
 
 ## My Understanding
 
-An interpretation, not a claim taken from the sources.
+A retrieval reading, held as interpretation rather than sourced fact.
 
 ## Sources
 
@@ -1140,7 +1233,19 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
         ),
         (
             "duplicate title",
-            mutate(**{"wiki/design/Good Article.md": GOOD}),
+            # Reworded, so this case isolates the ambiguous title: a copied body
+            # would also trip the repeated-prose check, which is its own case.
+            mutate(
+                **{
+                    "wiki/design/Good Article.md": GOOD.replace(
+                        "A definition paragraph that explains the concept under test.",
+                        "A definition paragraph for a same-titled article elsewhere.",
+                    ).replace(
+                        "An interpretation, not a claim taken from the sources.",
+                        "A different reading, recorded beside the same title.",
+                    )
+                }
+            ),
             [],
             {"collection.duplicate_title", "collection.no_index", "collection.orphan"},
         ),
@@ -1186,9 +1291,22 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
         ),
         (
             "two domain indexes",
-            mutate(**{index_path: INDEX, "wiki/design/index.md": INDEX}),
+            mutate(**{index_path: INDEX, "wiki/design/index.md": INDEX.replace("this domain", "the design vault")}),
             [],
             set(),
+        ),
+        (
+            "duplicated prose",
+            mutate(
+                **{
+                    "wiki/testing/Other Article.md": OTHER.replace(
+                        "A separate reading of the other concept, recorded as interpretation.",
+                        "A definition paragraph that explains the concept under test.",
+                    )
+                }
+            ),
+            [],
+            {"collection.duplicate_prose"},
         ),
         (
             "escaped pipe in a table wikilink",

@@ -46,7 +46,7 @@ Conversely, always using real collaborators can make tests slow, fragile, diffic
 
 ## My Understanding
 
-This guide is only as good as the collaborator's contract, since a double that permits a call production would reject gives false confidence. My reading is that the most defensible default is the least capable substitute that still lets the test express its requirement — a dummy before a stub, a stub before a fake, and a real collaborator before any of them when it is practical — because each step toward a more elaborate double adds behavior the test now depends on and that production may not share. This is an interpretation, not a claim taken from the sources.
+This guide is only as good as the collaborator's contract, since a double that permits a call production would reject gives false confidence. My reading is that the most defensible default is the least capable substitute that still lets the test express its requirement — a dummy before a stub, a stub before a fake, and a real collaborator before any of them when it is practical — because each step toward a more elaborate double adds behavior the test now depends on and that production may not share.
 
 ## Sources
 

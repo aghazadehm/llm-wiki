@@ -197,11 +197,12 @@ Mechanical:
 - No wikilinks pointing outside `wiki/`.
 - `Sources` non-empty, with every cited local file present in the repository.
 - No duplicate article titles, no domain missing an index, no article missing from its index, no orphan article.
+- No sentence of eight words or more is repeated between two articles — the validator's threshold. `Sources` is excluded from this check, because two articles citing the same edition on purpose are not repeating each other's prose.
 
 Judgement:
 
 - Interpretation is confined to `My Understanding` and reads as interpretation.
-- The article does not duplicate another article's body; search for a distinctive phrase before writing a section that may already exist elsewhere.
+- Two articles do not restate the same idea in different words. The repeated-prose check only sees matching sentences, so search for a distinctive phrase before writing a section that may already exist elsewhere.
 - Every page reference was opened and confirmed in the file it cites.
 - A practice article states the problem, the trade-offs, and when not to apply it.
 - The tags describe the article well enough to be useful as a filter.

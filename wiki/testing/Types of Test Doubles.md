@@ -57,7 +57,7 @@ The same helper can sometimes serve more than one role. Classification should fo
 
 ## My Understanding
 
-The roles overlap in practice more than the list suggests, because classification follows use rather than implementation. My reading is that a substitute offering a hard-coded answer is a stub even if it is named after a fake, and that a stub becomes a spy only once the test actually asserts what it recorded — a double that records calls nobody asserts is dead instrumentation. This is an interpretation, not a claim taken from the sources.
+The roles overlap in practice more than the list suggests, because classification follows use rather than implementation. My reading is that a substitute offering a hard-coded answer is a stub even if it is named after a fake, and that a stub becomes a spy only once the test actually asserts what it recorded — a double that records calls nobody asserts is dead instrumentation.
 
 ## Sources
 

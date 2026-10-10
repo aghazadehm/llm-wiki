@@ -26,7 +26,7 @@ Entry point for the design domain. It records the properties of a design that le
 
 ## Concepts without an article yet
 
-Listed as plain text until they are written, because the rules forbid linking to articles that do not exist:
+Kept as plain text rather than links, since a link to an article that does not exist yet would dangle:
 
 - Dependency Inversion Principle — code should depend on abstractions rather than concrete implementations. It shares an abbreviation with dependency injection and is regularly confused with it, though the sources treat the principle and the mechanism as different things.
 - Inversion of Control — used in these sources for the framework that resolves dependencies at runtime, and the thing Bender and McWherter advise keeping at a distance. Distinct from the principle above, which is the third meaning of the same phrase.

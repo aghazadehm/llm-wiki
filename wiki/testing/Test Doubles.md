@@ -50,7 +50,7 @@ Meszaros divides the same doubles along a different axis than this state-versus-
 
 ## My Understanding
 
-The taxonomy describes the role a substitute plays in one particular test, not a category a class permanently belongs to; the same helper can be a stub in one test and a spy in another depending on what the test asserts. My reading is that the practical dividing line is the evidence the test needs — a fixed answer, an observable interaction, or a usable working collaborator — and that the labels are shorthand for that need. This is an interpretation, not a claim taken from the sources.
+The taxonomy describes the role a substitute plays in one particular test, not a category a class permanently belongs to; the same helper can be a stub in one test and a spy in another depending on what the test asserts. My reading is that the practical dividing line is the evidence the test needs — a fixed answer, an observable interaction, or a usable working collaborator — and that the labels are shorthand for that need.
 
 ## Sources
 
