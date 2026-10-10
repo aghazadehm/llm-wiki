@@ -80,7 +80,20 @@ aliases:
 - `tags` is required and uses lowercase, singular terms from the vocabulary below. Reuse an existing tag before proposing a new one; a new tag is a change to this document.
 - `aliases` is optional and lists synonyms, abbreviations, and plural forms so that links from prose still resolve.
 
-The current tag vocabulary is `testing`, `tdd`, `test-doubles`, `design`, `refactoring`, `architecture`, `tooling`, `process`. It is mirrored in `KNOWN_TAGS` in `tools/validate_wiki.py`; changing it means changing both places.
+The current tag vocabulary is `testing`, `tdd`, `test-doubles`, `design`, `refactoring`, `architecture`, `tooling`, `process`, `llm`, `prompting`, `rag`, `agents`, `fine-tuning`, `evaluation`, `security`. It is mirrored in `KNOWN_TAGS` in `tools/validate_wiki.py`; changing it means changing both places.
+
+### Language
+
+English is the default. A domain is declared in another language only when the material it synthesizes is written in that language; that decision is recorded here and mirrored in `DOMAIN_LANGUAGES` in `tools/validate_wiki.py`, so changing it means changing both places.
+
+| Domain | Language |
+| --- | --- |
+| any domain not listed below | English |
+| `wiki/llm/` | Persian (`fa`) |
+
+The declaration covers the prose an article is written in. Frontmatter keys, tag values, required section names, and wikilink targets stay in English in every domain regardless of language, because they are navigation rather than exposition: an Obsidian property, a tag, or a link that changes spelling per domain stops being searchable across the vault.
+
+The validator measures the script the letters of an article's prose belong to, with code blocks and inline code excluded so that an example does not set the language. It reports a warning when an English domain reads mostly non-Latin, and when a domain declared non-English reads mostly Latin, in both cases because one of the two — the article or this table — is now wrong.
 
 ### Required sections
 
@@ -123,7 +136,7 @@ An `index` article is an entry point rather than an exposition. Required section
 
 ## Writing
 
-- Write in clear technical English.
+- Write in the language the article's domain declares under Language above. English is the default, and a domain leaves it only when the source material it synthesizes is written in another language.
 - Use established software engineering terminology.
 - Be precise and avoid unnecessary verbosity.
 - Use headings, lists, tables, and code examples where they improve clarity.
@@ -172,6 +185,7 @@ The validator covers the first group mechanically. The second group needs judgem
 Mechanical:
 
 - Frontmatter present, with a valid `type`, `status`, and at least one known tag.
+- The article's prose is written in the language its domain declares.
 - Exactly one H1, with definition content beneath it.
 - `Related Concepts`, `My Understanding`, and `Sources` present in that order, with `Sources` last.
 - No empty sections.

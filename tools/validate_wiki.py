@@ -10,6 +10,7 @@ Checks every article in ``wiki/**/*.md`` for:
 * links: every ``[[wikilink]]`` resolves, including its ``#heading`` anchor
 * links: wikilinks point into ``wiki/`` (sources are cited, not linked)
 * sources: at least one entry, and any cited local file exists under ``raw/``
+* language: an article is written in the language its domain declares in Agents.md
 * collection: no duplicate titles, no domain without an index, no orphan article
 
 Usage::
@@ -35,6 +36,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable, Iterator, Sequence
@@ -54,6 +56,46 @@ KNOWN_TAGS = (
     "architecture",
     "tooling",
     "process",
+    "llm",
+    "prompting",
+    "rag",
+    "agents",
+    "fine-tuning",
+    "evaluation",
+    "security",
+)
+
+#: Language each domain's articles are written in. Mirrors the table in
+#: Agents.md, which is the authority: a domain absent here is English, and
+#: declaring a domain non-English is a decision recorded in both places.
+DOMAIN_LANGUAGES = {
+    "llm": "fa",
+}
+
+#: An English article tolerates this share of non-Latin letters before the
+#: language rule fires, which leaves room for a quoted term or a proper name.
+LANGUAGE_MAX_NON_LATIN_SHARE = 0.10
+
+#: A non-English article must be at least half non-Latin to count as written
+#: in its declared language. Every known article sits far outside both bounds,
+#: so the check separates practice rather than splitting hairs.
+LANGUAGE_MIN_NON_LATIN_SHARE = 0.50
+
+#: Unicode scripts that make an article non-Latin. Naming the scripts keeps the
+#: check script-based rather than tied to one language.
+NON_LATIN_SCRIPTS = frozenset(
+    {
+        "ARABIC",
+        "HEBREW",
+        "CYRILLIC",
+        "GREEK",
+        "CJK",
+        "HIRAGANA",
+        "KATAKANA",
+        "HANGUL",
+        "THAI",
+        "DEVANAGARI",
+    }
 )
 
 #: Core headings every article must carry, in this order. ``type: index``
@@ -93,6 +135,7 @@ ALL_RULES = frozenset(
         "link.outside_wiki",
         "link.pipe_in_table",
         "style.curly_quotes",
+        "style.language",
         "collection.duplicate_title",
         "collection.no_index",
         "collection.index_missing",
@@ -277,6 +320,36 @@ def iter_body_lines(doc: Doc) -> Iterator[tuple[int, str]]:
                 fence = None
             continue
         yield index + 1, raw
+
+
+def _domain_of(path: str) -> str:
+    """The domain folder an article lives in, read from its vault path."""
+    parts = path.replace("\\", "/").split("/")
+    return parts[-2] if len(parts) >= 2 else ""
+
+
+def _prose_text(doc: Doc) -> str:
+    """Article prose, with code removed so that code never sets the language."""
+    return "\n".join(BACKTICK_RE.sub(" ", text) for _, text in iter_body_lines(doc))
+
+
+def _non_latin_share(text: str) -> float | None:
+    """Share of letters outside the Latin script, or ``None`` if unlettered.
+
+    Counting letters by Unicode script rather than by language keeps this free
+    of a language database, which the standard library does not carry.
+    """
+    latin = other = 0
+    for character in text:
+        if not character.isalpha():
+            continue
+        name = unicodedata.name(character, "")
+        if name.startswith("LATIN"):
+            latin += 1
+        elif name.split(" ", 1)[0] in NON_LATIN_SCRIPTS:
+            other += 1
+    total = latin + other
+    return None if total == 0 else other / total
 
 
 def _normalise(text: str) -> str:
@@ -486,6 +559,27 @@ def check_doc(
             for ref in _local_file_refs(text):
                 if not resolve_source(ref):
                     error(line, "sources.local_file", f"cited source '{ref}' does not exist in the vault")
+
+    # language: the domain declares its language in Agents.md, so prose that
+    # drifts to another script means either the article or the rule is wrong
+    domain = _domain_of(doc.path)
+    language = DOMAIN_LANGUAGES.get(domain, "en")
+    non_latin = _non_latin_share(_prose_text(doc))
+    if non_latin is not None:
+        if language == "en" and non_latin > LANGUAGE_MAX_NON_LATIN_SHARE:
+            warn(
+                1,
+                "style.language",
+                f"{non_latin:.0%} of the letters are non-Latin, but this domain is declared English; "
+                "write the article in English, or declare the domain's language in Agents.md",
+            )
+        elif language != "en" and non_latin < LANGUAGE_MIN_NON_LATIN_SHARE:
+            warn(
+                1,
+                "style.language",
+                f"only {non_latin:.0%} of the letters are non-Latin, but domain '{domain}' is declared "
+                f"'{language}'; write the article in that language, or declare the domain English",
+            )
 
     # links
     other_index = {Path(path).stem.lower(): path for path in other_md_paths}
@@ -762,6 +856,94 @@ An interpretation, not a claim taken from the sources.
 - Gerard Meszaros, *xUnit Test Patterns*, Addison-Wesley, 2007.
 """
 
+#: Fixtures for the language rule. ``wiki/llm/`` is the domain Agents.md
+#: declares Persian, so these prove the check fires in both directions.
+PERSIAN_ARTICLE = """---
+type: concept
+status: draft
+tags:
+  - llm
+  - rag
+---
+
+# RAG
+
+بازیابی و تولید معماری‌ای است که مدل را به یک پایگاه دانش بیرونی وصل می‌کند و پاسخ را از متن بازیابی‌شده می‌سازد.
+
+## Related Concepts
+
+- [[Good Article]] — یک مفهوم مرتبط.
+
+## My Understanding
+
+این یک برداشت شخصی است، نه نقل‌قولی از یک منبع.
+
+## Sources
+
+- 3lf, *LLM به زبان آدمیزاد*, `raw/books/llm.md`
+"""
+
+PERSIAN_INDEX = """---
+type: index
+status: draft
+tags:
+  - llm
+---
+
+# LLM Index
+
+نقطه ورود این دامنه است و مقالات برنامه‌ریزی‌شده بدون پیوند فهرست می‌شوند.
+
+## نوشته‌شده
+
+- [[RAG]] — یک مفهوم پایه.
+"""
+
+PERSIAN_CLEAN = {
+    "wiki/llm/RAG.md": PERSIAN_ARTICLE,
+    "wiki/llm/index.md": PERSIAN_INDEX,
+}
+
+ENGLISH_IN_PERSIAN_DOMAIN = _FM + """
+# RAG
+
+A definition paragraph for the article under test.
+
+## Related Concepts
+
+- [[Good Article]] — a related concept.
+
+## My Understanding
+
+An interpretation, not a claim taken from the sources.
+
+## Sources
+
+- 3lf, *LLM for humans*, `raw/books/llm.md`
+"""
+
+PERSIAN_IN_ENGLISH_DOMAIN = _FM + """
+# Good Article
+
+یک بند تعریف که مفهوم مورد آزمون را توضیح می‌دهد و نسبت آن را با مفاهیم همسایه روشن می‌کند.
+
+## Example
+
+یک تصویر کوتاه از کاربرد آن در عمل، بی‌آنکه ادعایی فراتر از منابع داشته باشد.
+
+## Related Concepts
+
+- [[Other Article]] — یک مفهوم مرتبط.
+
+## My Understanding
+
+یک برداشت، نه ادعایی برگرفته از منابع.
+
+## Sources
+
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
+"""
+
 CLEAN = {
     "wiki/testing/Good Article.md": GOOD,
     "wiki/testing/Other Article.md": OTHER,
@@ -782,8 +964,24 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
     good = "wiki/testing/Good Article.md"
     index_path = "wiki/testing/index.md"
 
+    persian_vault = dict(CLEAN)
+    persian_vault.update(PERSIAN_CLEAN)
+
     return [
         ("clean", dict(CLEAN), [], set()),
+        ("persian domain, persian prose", persian_vault, [], set()),
+        (
+            "latin prose in a persian domain",
+            {**persian_vault, "wiki/llm/RAG.md": ENGLISH_IN_PERSIAN_DOMAIN},
+            [],
+            {"style.language"},
+        ),
+        (
+            "non-latin prose in an english domain",
+            mutate(**{"wiki/testing/Good Article.md": PERSIAN_IN_ENGLISH_DOMAIN}),
+            [],
+            {"style.language"},
+        ),
         (
             "frontmatter missing",
             mutate(**{"wiki/testing/Good Article.md": GOOD.split("\n---\n", 1)[1].lstrip("\n")}),
