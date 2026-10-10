@@ -116,6 +116,7 @@ An `index` article is an entry point rather than an exposition. Required section
 ## Sources and Citations
 
 - Every knowledge article contains a `Sources` section with at least one entry.
+- A `Sources` section holds citation entries and nothing else. Prose left there is prose the vault does not check, so it belongs in a body section, and the validator reports any line that is not an entry.
 - Use one entry per source, in this form:
     - Web source: `- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.`
     - Local source: `` - Gerard Meszaros, *xUnit Test Patterns*, Addison-Wesley, 2007. `raw/books/xUnit Test Patterns Refactoring Test Code-Addison-Wesley (2007).pdf` ``
@@ -197,6 +198,7 @@ Mechanical:
 - No wikilinks pointing outside `wiki/`.
 - `Sources` non-empty, with every cited local file present in the repository.
 - No duplicate article titles, no domain missing an index, no article missing from its index, no orphan article.
+- Every body line belongs to a section: nothing precedes the `# ` heading, and `Sources` contains citation entries rather than prose.
 - No sentence of eight words or more is repeated between two articles — the validator's threshold. `Sources` is excluded from this check, because two articles citing the same edition on purpose are not repeating each other's prose.
 
 Judgement:

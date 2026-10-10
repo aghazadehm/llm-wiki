@@ -7,6 +7,7 @@ Checks every article in ``wiki/**/*.md`` for:
 * frontmatter: ``tags`` present and drawn from the known vocabulary
 * structure: one H1 with definition content beneath it, no empty sections
 * structure: the required core sections present, in order, with ``Sources`` last
+* structure: no text above the H1, and ``Sources`` holds citation entries only
 * links: every ``[[wikilink]]`` resolves, including its ``#heading`` anchor
 * links: wikilinks point into ``wiki/`` (sources are cited, not linked)
 * sources: at least one entry, and any cited local file exists under ``raw/``
@@ -130,6 +131,8 @@ ALL_RULES = frozenset(
         "structure.required_section",
         "structure.section_order",
         "structure.sources_last",
+        "structure.sources_content",
+        "structure.content_before_h1",
         "structure.index_links",
         "sources.empty",
         "sources.local_file",
@@ -600,6 +603,21 @@ def check_doc(
 
     # structure
     h1s = [heading for heading in doc.headings if heading.level == 1]
+
+    # Prose above the first heading belongs to no section, which is also how it
+    # escapes every section-scoped check. It is only worth reporting when there
+    # is one heading to be above and the frontmatter parsed: an unterminated
+    # frontmatter leaves the whole file unattributed, and with no H1 at all the
+    # file has no opening to violate, so structure.h1 already says it.
+    if not doc.fm_error and len(h1s) == 1:
+        stray = [line for line, text in doc.intro if text.strip()]
+        if stray:
+            error(
+                stray[0],
+                "structure.content_before_h1",
+                "text appears before the '# ' heading, where no section owns it; move it beneath the heading it belongs to",
+            )
+
     if len(h1s) != 1:
         error(1, "structure.h1", f"expected exactly one '# ' heading, found {len(h1s)}")
     else:
@@ -649,6 +667,13 @@ def check_doc(
         if not bullets:
             error(sources.line, "sources.empty", "'Sources' must contain at least one '- ' entry")
         for line, text in sources.content:
+            if text.strip() and not LIST_ITEM_RE.match(text):
+                error(
+                    line,
+                    "structure.sources_content",
+                    "'Sources' holds citation entries only; this line is prose, and the repeated-prose "
+                    "check skips Sources, so a passage left here is exempt from that check",
+                )
             for ref in _local_file_refs(text):
                 if not resolve_source(ref):
                     error(line, "sources.local_file", f"cited source '{ref}' does not exist in the vault")
@@ -1216,7 +1241,9 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
                 }
             ),
             [],
-            {"sources.empty"},
+            # Both hold here: the section has no citation entry, and the line
+            # standing in for one is prose rather than a citation.
+            {"sources.empty", "structure.sources_content"},
         ),
         (
             "cited file absent",
@@ -1294,6 +1321,26 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
             mutate(**{index_path: INDEX, "wiki/design/index.md": INDEX.replace("this domain", "the design vault")}),
             [],
             set(),
+        ),
+        (
+            "prose hidden in Sources",
+            mutate(
+                **{
+                    good: GOOD.replace(
+                        "- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.",
+                        "- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007."
+                        "\n\nA paragraph that would otherwise dodge the repeated-prose check.",
+                    )
+                }
+            ),
+            [],
+            {"structure.sources_content"},
+        ),
+        (
+            "text above the H1",
+            mutate(**{good: GOOD.replace("\n# Good Article\n", "\nText that no heading owns.\n\n# Good Article\n", 1)}),
+            [],
+            {"structure.content_before_h1"},
         ),
         (
             "duplicated prose",
