@@ -11,34 +11,46 @@ Entry point for the legacy-code domain. It covers what makes code hard to change
 
 ## Written articles
 
+The situation and the decisions:
+
 - [[Legacy Code]] — the competing definitions of the term, and why the choice between them changes the remedy.
 - [[Characterization Test]] — recording what a system does now, before changing it.
 - [[Dependency-Breaking Technique]] — small conservative edits that make code testable before any test exists.
 - [[Golden Master Test]] — comparing whole output against a captured baseline, and what that costs.
 - [[Refactor or Rewrite]] — deciding whether to improve a system or replace it.
 
+Techniques for changing code that cannot be tested yet:
+
+- [[Sprout Method]] — writing new behavior in a new method called from the old one.
+- [[Wrap Method]] — putting new behavior around an existing method, and leaving a seam behind.
+- [[Extract and Override Call]] — moving a single call to a method a test subclass can override.
+- [[Cover and Modify]] — working beneath a safety net of tests rather than inspecting afterwards.
+- [[Pinch Point]] — a narrowing where a few tests can detect changes in many methods.
+
 ## How the articles relate
 
 - [[Legacy Code]] is the premise: it states the problem that the rest of the domain answers.
-- [[Characterization Test]] is the usual first move once a change is unavoidable. [[Dependency-Breaking Technique]] is what makes that move possible when the code cannot be instantiated in a test at all, so the two are used in either order rather than one after the other.
-- [[Golden Master Test]] is the alternative when the smallest available interface is too coarse to assert against, and it is the one technique here that the sources disagree about.
+- [[Characterization Test]] is the usual first move once a change is unavoidable, and [[Dependency-Breaking Technique]] is what makes that move possible when the code cannot be instantiated in a test at all.
+- The five technique articles are siblings with different costs. [[Sprout Method]] and [[Wrap Method]] add behavior beside or around a method that cannot be tested, [[Extract and Override Call]] removes one dependency at a single call site, and [[Cover and Modify]] names the discipline the others serve.
+- [[Pinch Point]] answers where to start when an area has no tests, and [[Golden Master Test]] is the fallback when the smallest observable surface is too coarse to assert against.
 - [[Refactor or Rewrite]] is the decision that follows once behavior is pinned down, or the one taken instead of doing so.
 
 ## Relationship to other domains
 
-- The design domain supplies the mechanism this domain assumes. A [[Seam]] is where a dependency can be replaced without editing the logic being exercised, and [[Dependency Injection]] is how that replacement point usually comes to exist, so the articles here link there instead of explaining it again.
-- [[Test Doubles]] are what gets installed at a seam when a characterization test has to avoid a real collaborator.
+- The design domain supplies the mechanism these techniques assume or produce. [[Seam]] is where a dependency can be replaced without editing the logic being exercised, and [[Dependency Injection]] is how that replacement point usually comes to exist.
+- [[Types of Test Doubles]] and [[Test Doubles]] describe what gets installed at a seam, and [[State Verification]] is the assertion style a characterization test usually uses.
 
 ## Concepts without an article yet
 
 Recorded as plain text, because a link to a page that does not exist yet would dangle:
 
-- Cover and Modify — Feathers' name for putting code under test before changing it, contrasted with what he calls Edit and Pray (p. 9).
-- Pinch Point — a narrow place where a design change can be judged, used together with effect sketches (p. 183).
-- Effect Sketch — marking how a change propagates through a design, in order to find natural break points.
-- Sprout Method — adding new behavior in a new method rather than editing the existing one (pp. 59-67).
-- Wrap Method — renaming the method that exists and adding behavior around the call.
-- Extract and Override Call — the catalog entry for introducing a replacement point at a call site (p. 348).
+- Effect Sketch — a drawing of how a change propagates through a design, since pinch points are narrowings in it.
+- Sprout Class — the class-level companion to Sprout Method, for when the source class cannot be instantiated at all.
+- Wrap Class — the class-level companion to Wrap Method.
+- Replace Global Reference with Getter — the alternative when many calls reach the same global (p. 399).
+- Pass Null — passing a null for a parameter the test does not care about (p. 111).
+- Lean on the Compiler — using compilation errors to find what a signature change has affected (pp. 315-317).
+- Software Vise — the image used for tests that hold behavior in place while it is changed (p. 10).
 
 ## Sources
 
