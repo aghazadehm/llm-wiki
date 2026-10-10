@@ -25,9 +25,13 @@ python tools/validate_wiki.py             # report errors and warnings
 python tools/validate_wiki.py --strict    # treat warnings as failures
 python tools/validate_wiki.py --json      # machine-readable report
 python tools/validate_wiki.py --self-test # verify the rules themselves
+python tools/validate_wiki.py --all       # the self-test and the vault, in one command
 ```
 
+`--all` is the check that matters: it verifies that the rules still behave as fixtures expect, then validates the vault, and fails if either half fails. A rule can be quietly broken while every article still validates, which is why the two are one command rather than two habits. Under `--all` the self-test report goes to stderr, so `--all --json` still writes a single parseable JSON document to stdout.
+
 - Run the validator before declaring any article finished. Exit code `0` is clean, `1` means errors were found, `2` means the vault could not be read.
+- `tools/hooks/pre-commit` runs `--all` and refuses a commit that leaves the vault invalid. Git does not clone hooks, so a clone enables it once with `git config core.hooksPath tools/hooks`; setting that config is the only manual step, and `git commit --no-verify` bypasses the check deliberately.
 - Rules that need judgement are listed in the Review Checklist. The validator cannot judge those.
 - When these rules and actual practice disagree, stop and reconcile them explicitly: either fix the files or amend this document. Do not leave a rule that is silently ignored, and do not silently follow practice instead of the rule.
 - The tooling uses the Python 3 standard library only. Do not introduce a package manager, lockfile, or additional runtime to the repository.

@@ -20,9 +20,11 @@ Usage::
     python tools/validate_wiki.py --strict        # treat warnings as failures
     python tools/validate_wiki.py --json          # machine-readable report
     python tools/validate_wiki.py --self-test     # verify the rules themselves
+    python tools/validate_wiki.py --all           # both of the above, in one command
 
 Exit codes: ``0`` clean, ``1`` errors found (or warnings under ``--strict``),
-``2`` the vault could not be read.
+``2`` the vault could not be read. Under ``--all`` a failure in either check
+makes the whole run fail, so one command is enough to gate a commit.
 
 The script uses the standard library only. It deliberately introduces no
 package manager, lockfile, or runtime beyond Python 3, so the vault stays
@@ -1219,8 +1221,12 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
     ]
 
 
-def run_self_test() -> int:
-    """Check the rules fire on minimal fixtures and stay quiet on a clean vault."""
+def run_self_test(quiet: bool = False, stream=sys.stdout) -> int:
+    """Check the rules fire on minimal fixtures and stay quiet on a clean vault.
+
+    ``quiet`` suppresses the passing lines so that a hook can report one line;
+    failures always print in full, because a suppressed failure is a lie.
+    """
     failures = 0
     for name, docs, other_paths, expected in _cases():
         findings = analyze(
@@ -1230,14 +1236,15 @@ def run_self_test() -> int:
         )
         actual = {finding.rule for finding in findings}
         if actual == expected:
-            print(f"PASS  {name}")
+            if not quiet:
+                print(f"PASS  {name}", file=stream)
             continue
         failures += 1
-        print(f"FAIL  {name}")
-        print(f"      expected: {sorted(expected) or ['<no findings>']}")
-        print(f"      actual:   {sorted(actual) or ['<no findings>']}")
+        print(f"FAIL  {name}", file=stream)
+        print(f"      expected: {sorted(expected) or ['<no findings>']}", file=stream)
+        print(f"      actual:   {sorted(actual) or ['<no findings>']}", file=stream)
         for finding in findings:
-            print(f"        {finding.format()}")
+            print(f"        {finding.format()}", file=stream)
 
     cases = _cases()
     covered: set[str] = set()
@@ -1247,16 +1254,16 @@ def run_self_test() -> int:
     unregistered = sorted(covered - ALL_RULES)
     if uncovered or unregistered:
         failures += 1
-        print("FAIL  rule coverage")
+        print("FAIL  rule coverage", file=stream)
         if uncovered:
-            print(f"      no fixture exercises: {uncovered}")
+            print(f"      no fixture exercises: {uncovered}", file=stream)
         if unregistered:
-            print(f"      fixtures assert rules that are not declared in ALL_RULES: {unregistered}")
-    else:
-        print(f"PASS  rule coverage ({len(ALL_RULES)} rules exercised)")
+            print(f"      fixtures assert rules that are not declared in ALL_RULES: {unregistered}", file=stream)
+    elif not quiet:
+        print(f"PASS  rule coverage ({len(ALL_RULES)} rules exercised)", file=stream)
 
     total = len(cases) + 1
-    print(f"\n{total - failures}/{total} self-test checks passed")
+    print(f"\n{total - failures}/{total} self-test checks passed", file=stream)
     return 1 if failures else 0
 
 
@@ -1283,10 +1290,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--strict", action="store_true", help="treat warnings as failures")
     parser.add_argument("--quiet", action="store_true", help="print errors only")
     parser.add_argument("--self-test", action="store_true", help="verify the rules using in-memory fixtures")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="run the self-test and then validate the vault, failing if either fails",
+    )
     args = parser.parse_args(argv)
 
-    if args.self_test:
-        return run_self_test()
+    self_test_status = 0
+    if args.self_test or args.all:
+        # Under --all the self-test report is diagnostics, so it goes to stderr
+        # and the vault report keeps stdout to itself: ``--all --json`` then
+        # stays a parseable single JSON document.
+        self_test_status = run_self_test(
+            quiet=args.quiet,
+            stream=sys.stderr if args.all else sys.stdout,
+        )
+        if args.self_test:
+            return self_test_status
 
     root = _infer_root(args.root)
     docs = load_docs(root)
@@ -1333,7 +1354,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if errors or (args.strict and warnings):
         return 1
-    return 0
+    return self_test_status
 
 
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+#!/bin/sh
+# Block a commit that would leave the vault invalid.
+#
+# Git does not clone hooks, so each clone opts in once:
+#
+#     git config core.hooksPath tools/hooks
+#
+# That points Git at this directory, which keeps the check in the repository
+# instead of in .git/hooks, where it would be invisible to everyone else and
+# lost with the next clone. `git commit --no-verify` still bypasses it, which
+# is deliberate: a check you cannot override is one people disable entirely.
+#
+# The command is the one Agents.md documents: the validator's own rules are
+# verified first, then the vault itself.
+
+set -eu
+
+cd -- "$(git rev-parse --show-toplevel)"
+
+if command -v python >/dev/null 2>&1; then
+    interpreter=python
+elif command -v python3 >/dev/null 2>&1; then
+    interpreter=python3
+else
+    echo "pre-commit: no Python 3 on PATH, so the vault cannot be checked." >&2
+    echo "pre-commit: install Python 3, or commit with --no-verify to skip." >&2
+    exit 1
+fi
+
+exec "$interpreter" tools/validate_wiki.py --all --quiet
