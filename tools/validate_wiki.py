@@ -5,6 +5,9 @@ Checks every article in ``wiki/**/*.md`` for:
 
 * frontmatter: present, terminated, and carrying a valid ``type`` and ``status``
 * frontmatter: ``tags`` present and drawn from the known vocabulary
+* frontmatter: synthesis and source pages carry ``title`` and ``last_updated``; a
+  synthesis page also carries ``question``, and its ``related``/``sources``
+  entries each resolve to a wiki article
 * structure: one H1 with definition content beneath it, no empty sections
 * structure: the required core sections present, in order, with ``Sources`` last
 * structure: no text above the H1, and ``Sources`` holds citation entries only
@@ -47,7 +50,7 @@ from typing import Callable, Iterable, Iterator, Sequence
 
 # --- rule configuration -----------------------------------------------------
 
-VALID_TYPES = ("concept", "comparison", "index")
+VALID_TYPES = ("concept", "comparison", "index", "synthesis", "source")
 VALID_STATUSES = ("draft", "reviewed", "archived")
 
 #: Tag vocabulary. Extend only by decision, so tags stay meaningful filters.
@@ -125,6 +128,13 @@ ALL_RULES = frozenset(
         "frontmatter.status",
         "frontmatter.tags",
         "frontmatter.tags_unknown",
+        "frontmatter.title",
+        "frontmatter.question",
+        "frontmatter.last_updated",
+        "frontmatter.related",
+        "frontmatter.sources",
+        "frontmatter.related_unknown",
+        "frontmatter.sources_unknown",
         "structure.h1",
         "structure.definition",
         "structure.empty_section",
@@ -559,6 +569,43 @@ def _local_file_refs(text: str) -> list[str]:
 # --- per-document rules -----------------------------------------------------
 
 
+def _check_type_frontmatter(doc: Doc, link_index: dict[str, str], findings: list[Finding]) -> None:
+    """Type-specific frontmatter. The common type/status/tags are checked by the
+    caller; this carries the extra keys ``synthesis`` and ``source`` pages declare.
+
+    The ``related``/``sources`` keys are the frontmatter record of the links that
+    the ``Related Concepts``/``Sources`` body sections also carry, so a path that
+    does not name a wiki article is reported even when the matching body link is
+    fine, and vice versa.
+    """
+    if doc.doc_type not in ("synthesis", "source"):
+        return
+
+    def error(line: int, rule: str, message: str) -> None:
+        findings.append(Finding(doc.path, line, "error", rule, message))
+
+    if "title" not in doc.meta or not doc.meta.get("title"):
+        error(1, "frontmatter.title", "frontmatter is missing the required 'title' key")
+    if "last_updated" not in doc.meta or not doc.meta.get("last_updated"):
+        error(1, "frontmatter.last_updated", "frontmatter is missing the required 'last_updated' key")
+
+    if doc.doc_type == "synthesis":
+        if "question" not in doc.meta or not doc.meta.get("question"):
+            error(1, "frontmatter.question", "a synthesis page is missing the required 'question' key")
+        for key, rule in (("related", "frontmatter.related"), ("sources", "frontmatter.sources")):
+            value = doc.meta.get(key)
+            if isinstance(value, str):
+                value = [value] if value else []
+            if not value:
+                error(1, rule, f"frontmatter is missing the required '{key}' list")
+                continue
+            for entry in value:
+                name = _scalar(str(entry))
+                target = name[:-3] if name.endswith(".md") else name
+                if link_index.get(target.lower()) is None:
+                    error(1, rule + "_unknown", f"'{key}' entry '{name}' does not name a wiki article")
+
+
 def check_doc(
     doc: Doc,
     link_index: dict[str, str],
@@ -600,6 +647,8 @@ def check_doc(
             unknown = [tag for tag in tags if tag not in KNOWN_TAGS]
             if unknown:
                 warn(1, "frontmatter.tags_unknown", f"tag(s) outside the known vocabulary: {', '.join(unknown)}")
+
+        _check_type_frontmatter(doc, link_index, findings)
 
     # structure
     h1s = [heading for heading in doc.headings if heading.level == 1]
@@ -974,6 +1023,40 @@ A lone interpretation, set down apart from the sources.
 ## Sources
 
 - Gerard Meszaros, *xUnit Test Patterns*, Addison-Wesley, 2007.
+"""
+
+#: A synthesis page: it carries the extra frontmatter keys (title, question,
+#: related, sources, last_updated) the synthesis type requires. Placed over
+#: ``Good Article`` so the index and the cross-link to it still resolve.
+SYNTHESIS_FIXTURE = """---
+type: synthesis
+status: draft
+tags:
+  - testing
+title: "Good Article"
+question: "What does the article under test establish?"
+related:
+  - Other Article.md
+sources:
+  - Good Article.md
+last_updated: 2026-10-11
+---
+
+# Good Article
+
+A synthesis answer that stands apart from the articles it draws on.
+
+## Related Concepts
+
+- [[Other Article]] — the article it builds on.
+
+## My Understanding
+
+A reading held separately from what the sources state.
+
+## Sources
+
+- Martin Fowler, [Mocks Aren't Stubs](https://martinfowler.com/articles/mocksArentStubs.html), 2007.
 """
 
 #: Fixtures for the language rule. ``wiki/llm/`` is the domain Agents.md
@@ -1382,6 +1465,54 @@ def _cases() -> list[tuple[str, dict[str, str], list[str], set[str]]]:
             ),
             [],
             {"link.pipe_in_table"},
+        ),
+        (
+            "synthesis page, complete",
+            mutate(**{good: SYNTHESIS_FIXTURE}),
+            [],
+            set(),
+        ),
+        (
+            "synthesis missing title",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace('title: "Good Article"\n', "")}),
+            [],
+            {"frontmatter.title"},
+        ),
+        (
+            "synthesis missing last_updated",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace("last_updated: 2026-10-11\n", "")}),
+            [],
+            {"frontmatter.last_updated"},
+        ),
+        (
+            "synthesis missing question",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace('question: "What does the article under test establish?"\n', "")}),
+            [],
+            {"frontmatter.question"},
+        ),
+        (
+            "synthesis missing related",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace("related:\n  - Other Article.md\n", "")}),
+            [],
+            {"frontmatter.related"},
+        ),
+        (
+            "synthesis missing sources",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace("sources:\n  - Good Article.md\n", "")}),
+            [],
+            {"frontmatter.sources"},
+        ),
+        (
+            "synthesis related entry unknown",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace("  - Other Article.md\n", "  - Ghost Article.md\n")}),
+            [],
+            {"frontmatter.related_unknown"},
+        ),
+        (
+            "synthesis sources entry unknown",
+            mutate(**{good: SYNTHESIS_FIXTURE.replace("  - Good Article.md\n", "  - Ghost Source.md\n")}),
+            [],
+            {"frontmatter.sources_unknown"},
         ),
     ]
 
