@@ -7,10 +7,14 @@ This repository is a model-agnostic personal knowledge base for software enginee
 | Directory | Contents | Who writes it |
 | --- | --- | --- |
 | `wiki/` | Reviewed, synthesized knowledge, organized by domain | Agents and the owner |
+| `wiki/sources/` | One summary page per raw source, recording what each source says and which articles drew on it | Agents and the owner |
+| `wiki/synthesis/` | Answers filed back from the vault's own questions, so exploration compounds like an ingested source | Agents and the owner |
 | `raw/` | Source material as captured: articles, books, papers | The owner |
 | `templates/` | Reusable document templates | The owner |
 | `tools/` | Scripts that check the repository | Agents and the owner |
 | `Clippings/` | Inbox for externally clipped sources, before filing into `raw/` | The owner |
+
+`wiki/index.md` is the single entry point to the vault. Unlike the per-domain indexes, it names each domain and points to that domain's index rather than re-listing every article, so it can stay current without duplicating the per-domain knowledge maps.
 
 This file is repository policy, not a wiki article. It carries no frontmatter and is not itself validated.
 
@@ -76,13 +80,25 @@ aliases:
 ---
 ```
 
-- `type` is required, and is one of `concept`, `comparison`, or `index`.
+- `type` is required, and is one of `concept`, `comparison`, `synthesis`, `source`, or `index`.
 - `status` is required, and is one of `draft`, `reviewed`, or `archived`.
     - `draft` — written but not yet reviewed. This is the only status an agent writes.
     - `reviewed` — accepted by the owner. Only the owner sets this.
     - `archived` — superseded or withdrawn; keep the file for history rather than deleting it.
 - `tags` is required and uses lowercase, singular terms from the vocabulary below. Reuse an existing tag before proposing a new one; a new tag is a change to this document.
 - `aliases` is optional and lists synonyms, abbreviations, and plural forms so that links from prose still resolve.
+
+### Type-specific frontmatter
+
+`concept`, `comparison`, and `index` articles carry the four keys above. `synthesis` and `source` articles carry two more, checked by the validator:
+
+- `title` — required on `synthesis` and `source` pages. It records the title as a property rather than trusting the file name, so a source summary can be re-filed without losing its label. It normally matches the `# ` heading.
+- `last_updated` — required on `synthesis` and `source` pages, in `YYYY-MM-DD` form, and the day the page's content was last revised. It is the freshness signal the semantic lint reads: a `synthesis` page whose answer depends on a `concept` that has since changed, and a `source` page for a source that has since been re-edited, both need their `last_updated` revisited.
+
+A `synthesis` page carries two more keys, also checked by the validator:
+
+- `question` — the original user question the page answers, verbatim. It is what the synthesis index's Question column reports.
+- `related` and `sources` — path lists. `related` names the articles the answer builds on; `sources` names the source-summary pages it draws from. Each entry must name a wiki article (a bare name or a `.md` path). These mirror the `Related Concepts` and `Sources` body sections, which remain the human-readable, wikilinked record; the frontmatter is the machine-checkable twin. A link that resolves in the body but not in `related` (or vice versa) is a drift the validator reports.
 
 The current tag vocabulary is `testing`, `tdd`, `test-doubles`, `design`, `refactoring`, `architecture`, `tooling`, `process`, `llm`, `prompting`, `rag`, `agents`, `fine-tuning`, `evaluation`, `security`. It is mirrored in `KNOWN_TAGS` in `tools/validate_wiki.py`; changing it means changing both places.
 
@@ -183,13 +199,41 @@ For a new knowledge topic:
 8. Run `python tools/validate_wiki.py` and work through the Review Checklist.
 9. Leave the new or changed articles at `status: draft` for the owner to review.
 
+Two further operations keep the vault compounding rather than only accumulating:
+
+### Source summaries
+
+When a raw source is read for the first time, or a domain is opened on a source that has no page yet, write a `source` page in `wiki/sources/` recording what the source says and which articles drew on it. Cite the local file under `raw/` in `Sources`, and confirm every page reference against the file before writing it. A source page is written in the vault's working language (English) even when the source is in another language, so that traceability stays uniform across the vault. The `sources` domain index lists summarized sources as links and unsummarized ones as plain text, so the coverage gap stays visible.
+
+### Query: file answers back
+
+The vault is not only a place to read; it is a place to work out questions. When a question is answered by combining two or more existing articles — a comparison, a trade-off, a distinction, a gap the owner asked about — the answer does not have to disappear into the conversation. File it back:
+
+1. Name the question. It becomes the page's `question` frontmatter and its row in the synthesis index.
+2. Write the answer as a `synthesis` page in `wiki/synthesis/`, linking the articles it builds on in `Related Concepts` and the source summaries it leans on in `Sources`, and recording those same targets in the `related` and `sources` frontmatter lists.
+3. Set `last_updated` to the day the answer is written, and add the page to `wiki/synthesis/index.md` with its question, date, and related pages.
+4. If the answer surfaces a genuine gap — a concept mentioned with no article, or a contradiction between two articles — record it in the synthesis index's "Questions worth answering" list rather than inventing a page that cannot yet be sourced.
+
+A synthesis page is earned the same way any article is: it must answer a real question by drawing on pages that exist, and its interpretation stays in `My Understanding` the same way a `concept` article's does. A question that is really a new concept belongs in the domain it concerns, not in `synthesis/`.
+
+## Lint
+
+The validator covers the structural half of lint mechanically — orphan pages, missing cross-references, duplicate prose, a source page whose cited file is gone, a synthesis page whose `related`/`sources` have drifted from its body links. The semantic half needs judgement and runs periodically, by reading, not by a script:
+
+- **Contradictions.** Two articles that state opposing claims about the same thing. Report the pair and the specific claim in each; do not merge them silently.
+- **Stale claims.** A claim that a newer source has superseded, or a `synthesis` page whose `last_updated` predates a change to an article it builds on.
+- **Missing concepts.** An important term that several articles reference by name but that has no page of its own, and that the domain index does not already list as planned.
+- **Gaps worth a source or a question.** A claim in an article that no `Sources` entry supports, or a source under `raw/` that no `source` page summarizes.
+
+A lint pass changes nothing on its own. It produces a list of findings for the owner to triage, in the spirit of the Review Checklist below. Run it after a batch of new articles, and after any ingest that introduces a new source.
+
 ## Review Checklist
 
 The validator covers the first group mechanically. The second group needs judgement and is the author's responsibility.
 
 Mechanical:
 
-- Frontmatter present, with a valid `type`, `status`, and at least one known tag.
+- Frontmatter present, with a valid `type`, `status`, and at least one known tag; `synthesis` and `source` pages additionally carry `title` and `last_updated`, and a `synthesis` page carries `question` with `related` and `sources` entries that each name a wiki article.
 - The article's prose is written in the language its domain declares.
 - Exactly one H1, with definition content beneath it.
 - `Related Concepts`, `My Understanding`, and `Sources` present in that order, with `Sources` last.
