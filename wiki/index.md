@@ -17,6 +17,7 @@ The vault's single entry point. It does not restate each domain's article list �
 | `design`      | The properties of a design that let behavior be changed from outside the code — the property tests depend on.                             | `wiki/design/index.md`      |
 | `legacy-code` | What makes code hard to change, how to pin down behavior nobody has written down, and the techniques that make such code testable at all. | `wiki/legacy-code/index.md` |
 | `llm`         | 模型、提示、工具、检索与安全 (Persian; the domain is written in the language of the source material it synthesizes).                                    | `wiki/llm/index.md`         |
+| `discovery`   | Outcome-focused discovery, visual planning (Impact/User Story Mapping), collaborative specification (BDD/SBE/Example Mapping), and underlying principles. | `wiki/discovery/index.md`  |
 | `sources`     | One summary page per raw source: what it says, where, and what the articles drew from it.                                                 | `wiki/sources/index.md`     |
 | `synthesis`   | Questions answered across the vault, filed back so the vault compounds from its own exploration, not only from its sources.               | `wiki/synthesis/index.md`   |
 
