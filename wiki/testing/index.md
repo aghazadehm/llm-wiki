@@ -17,6 +17,8 @@ Entry point for the testing domain. It records how a test establishes correctnes
 - [[State Verification]] — establishing correctness from an observable result.
 - [[Behavior Verification]] — establishing correctness from observed interactions.
 - [[Classical and Mockist Testing]] — the two broad stances on collaborators and verification.
+- [[Integration Testing]] — verifying components work together at boundaries.
+- [[Consumer-Driven Contract Testing]] — consumer-defined contracts verified by providers to enable independent deployment.
 
 ## How the articles relate
 

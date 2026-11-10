@@ -16,6 +16,7 @@ Entry point for the source-summary domain. Each page records one raw source — 
 | --- | --- | --- |
 | [[Mocks Aren't Stubs]] | The state/behavior verification split, the five kinds of test double, and the classical versus mockist design divide. | [[Test Doubles]], [[State Verification]], [[Behavior Verification]] |
 | [[3lf LLM for humans]] | A Persian-language, beginner's tour of LLMs: tokens, embeddings, prompting, parameters, tools, RAG, fine-tuning, and evaluation. | [[Tokenization]], [[Embedding]], [[Prompt Engineering]], [[RAG]] |
+| [[Consumer-Driven Contract Testing (CDCT)]] | Consumer-driven contracts in microservices: provider/consumer/contract roles, independent deployment, and validating responses against consumer-defined contracts. | [[Test Doubles]], [[Integration Testing]] |
 
 ## Not yet summarized
 
