@@ -15,6 +15,7 @@ The vault's single entry point. It does not restate each domain's article list �
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | `testing`     | How a test establishes correctness, which substitute can stand in for a real collaborator, and how that choice is made.                   | `wiki/testing/index.md`     |
 | `design`      | The properties of a design that let behavior be changed from outside the code — the property tests depend on.                             | `wiki/design/index.md`      |
+| `prototyping` | How representations of a design idea are built to answer design questions before the product exists, and how they communicate across audiences. | `wiki/prototyping/index.md` |
 | `legacy-code` | What makes code hard to change, how to pin down behavior nobody has written down, and the techniques that make such code testable at all. | `wiki/legacy-code/index.md` |
 | `llm`         | 模型、提示、工具、检索与安全 (Persian; the domain is written in the language of the source material it synthesizes).                                    | `wiki/llm/index.md`         |
 | `discovery`   | Outcome-focused discovery, visual planning (Impact/User Story Mapping), collaborative specification (BDD/SBE/Example Mapping), and underlying principles. | `wiki/discovery/index.md`  |
